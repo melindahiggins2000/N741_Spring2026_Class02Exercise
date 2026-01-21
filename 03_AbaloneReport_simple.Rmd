@@ -1,0 +1,144 @@
+---
+title: "Abalone Report - Simple"
+author: "Melinda Higgins"
+date: "2022-09-10"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+# knitr options to set up
+# show code in report
+knitr::opts_chunk$set(echo = TRUE)
+
+# if errors, keep knitting
+knitr::opts_chunk$set(error = TRUE)
+
+# hide messages and warnings
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+
+# load printr package for nicer
+# table output formatting
+library(printr)
+
+# load packages needed
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(purrr)
+
+# load abalone dataset
+abalone <- read_csv("abalone.csv")
+
+# add age variable
+abalone <- abalone %>%
+  mutate(age = rings + 1.5)
+```
+
+## Make a plot of Age (Y-axis) by Whole Weight (X-axis)
+
+Let's make a 2 dimensional scatterplot of the abalone `age` by `wholeWeight`. We'll also overlay a best fit line by `sex.` And we'll add some better labels and title.
+
+Learn more about `ggplot2` graphics at:
+
+* [http://www.cookbook-r.com/Graphs/](http://www.cookbook-r.com/Graphs/)
+* [https://r-graphics.org/](https://r-graphics.org/)
+* [https://ggplot2-book.org/](https://ggplot2-book.org/)
+* and the great examples at [https://r-graph-gallery.com/index.html](https://r-graph-gallery.com/index.html)
+* including cutomizing legend titles at [https://r-graph-gallery.com/239-custom-layout-legend-ggplot2.html](https://r-graph-gallery.com/239-custom-layout-legend-ggplot2.html)
+
+
+Notice that we can SEE the R code used here.
+
+```{r}
+ggplot(abalone, aes(wholeWeight, age, color = sex)) +
+  geom_point() +
+  geom_smooth(method = lm) +
+  xlab("Whole Weight in grams") +
+  ylab("Age in years (rings + 1.5)") +
+  labs(title = "Age of Abalones by Whole Weight",
+       subtitle = "Best fit lines shown by sex") +
+  labs(color = "Biological Sex")
+```
+
+## Inline r code to insert results inside a sentence
+
+Here is an example of writing a sentence with some results that are automatically inserted. For example, the average age of the `r nrow(abalone)` abalones is `r mean(abalone$age)`.
+
+## Making a simple table
+
+Here is a simple table with a caption using the `table()` function and the `knitr::kable()` options for formatting.
+
+```{r}
+# a simple table
+abalone %>%
+  select(sex) %>%
+  table()
+```
+
+Now adding a caption 
+
+```{r}
+# a simple table
+abalone %>%
+  select(sex) %>%
+  table() %>%
+  knitr::kable(caption = "Biological Sex of Abalones - Counts")
+```
+
+Next add some custom column headings
+
+```{r}
+# a simple table
+abalone %>%
+  select(sex) %>%
+  table() %>%
+  knitr::kable(caption = "Biological Sex of Abalones - Counts",
+               col.names = c("Biological Sex", "Frequency"))
+```
+
+## Very brief intro to `gtsummary` package
+
+Another "tidyverse" compatible R package for working with tables is the `gtsummary` package.
+
+Learn more at:
+
+* [https://www.danieldsjoberg.com/gtsummary/index.html](https://www.danieldsjoberg.com/gtsummary/index.html)
+* specifically review the vignette for the `tbl_summary()` function [https://www.danieldsjoberg.com/gtsummary/articles/tbl_summary.html](https://www.danieldsjoberg.com/gtsummary/articles/tbl_summary.html)
+
+The code below will produce a table with summary statistics based on the variable type:
+
+* `sex` is categorical character variable so you get frequencies and percents of the total;
+* `age` is continuous numeric variable so you get the median and IQR (interquartile range) by default.
+
+```{r}
+library(gtsummary)
+abalone %>%
+  select(sex, age) %>%
+  tbl_summary()
+```
+
+Suppose we instead want to get the mean and standard deviation for `age`. Inside the `tbl_summary()` function we can use the `statistic = list(...)` option.
+
+```{r}
+abalone %>%
+  select(sex, age) %>%
+  tbl_summary(
+    statistic = list(all_continuous() ~ "{mean} ({sd})")
+    )
+
+```
+
+We could take this a step further and get statistics by a grouping variable. For example, let's get the 3 dimensional measurements by `sex`. Inside the `tbl_summary()` function we can use the `by = group` option.
+
+```{r}
+abalone %>%
+  select(height, diameter, length, sex) %>%
+  tbl_summary(
+    by = sex,
+    statistic = list(all_continuous() ~ "{mean} ({sd})")
+    )
+```
+
